@@ -36,7 +36,8 @@ function Box(props: ThreeElements['mesh']) {
 }
 
 interface PointerProps {
-  clicked: boolean;
+  leftClicked: boolean;
+  middleClicked: boolean;
 };
 
 function Pointer(props: PointerProps) {
@@ -45,7 +46,7 @@ function Pointer(props: PointerProps) {
   const endPointerDiff = useRef<THREE.Vector2>(new THREE.Vector2(0, 0));
 
   useFrame((state, delta) => {
-    if (props.clicked && !(isRotating.current)) {
+    if (props.leftClicked && !(isRotating.current)) {
       rotateStartPointer.current = new THREE.Vector2(state.pointer.x, state.pointer.y);
       isRotating.current = true;
     }
@@ -56,16 +57,16 @@ function Pointer(props: PointerProps) {
       if (rotateStartPointer.current === undefined || endPointerDiff.current === undefined) {
         throw new Error;
       }
-      const xPointerDiff = (state.pointer.x - rotateStartPointer.current.x) + endPointerDiff.current.x;
-      const yPointerDiff = (state.pointer.y - rotateStartPointer.current.y) + endPointerDiff.current.y;
+      const xPointerDiff = -(state.pointer.x - rotateStartPointer.current.x) + endPointerDiff.current.x;
+      const yPointerDiff = -(state.pointer.y - rotateStartPointer.current.y) + endPointerDiff.current.y;
 
-      if (!props.clicked) {
+      if (!props.leftClicked) {
         isRotating.current = false;
         endPointerDiff.current = new THREE.Vector2(xPointerDiff, yPointerDiff);
       } else {
-        state.camera.position.x = cameraOffset.x * (Math.sin(xPointerDiff));;
-        state.camera.position.y = cameraOffset.y;
-        state.camera.position.z = cameraOffset.z * (Math.cos(xPointerDiff));
+        state.camera.position.x = cameraOffset.x * (Math.sin(xPointerDiff)) * Math.cos(yPointerDiff);
+        state.camera.position.y = cameraOffset.y * (Math.sin(yPointerDiff));
+        state.camera.position.z = cameraOffset.z * (Math.cos(xPointerDiff)) * Math.cos(yPointerDiff);
         console.log(state.camera.position)
         state.camera.lookAt(target.x, target.y, target.z);
       }
@@ -79,10 +80,25 @@ function Pointer(props: PointerProps) {
 }
 
 function App() {
-  const [clicked, click] = useState(false)
+  const [leftClicked, leftClick] = useState(false);
+  const [middleClicked, middleClick] = useState(false);
   return (
-    <div style={{width: "100vw", height: "100vh"}}>
-      <Canvas onMouseDown={(event) => click(true)} onMouseUp={(event) => click(false)} onMouseOut={(event) => click(false)}>
+    <div style={{width: "90vw", height: "90vh"}}>
+      <Canvas 
+       onMouseDown={(event) => {
+        if (event.button == 0) {
+            leftClick(true);
+        } else if (event.button == 1) {
+            middleClick(true);
+        }}}
+       onMouseUp={(event) => {
+        leftClick(false);
+        middleClick(false);
+        }} 
+        onMouseOut={(event) => {
+          leftClick(false);
+          middleClick(false);
+          }} >
         <ambientLight intensity={Math.PI / 2} />
         <spotLight position={[10, 10, 10]} angle={0.15} penumbra={1} decay={0} intensity={Math.PI} />
         <pointLight position={[-10, -10, -10]} decay={0} intensity={Math.PI} />
@@ -90,7 +106,7 @@ function App() {
         <Box position={[1.2, 0, 0]} />
         <Box position={[0, -1.2, 0]} />
         <axesHelper args={[5]} />
-        <Pointer clicked={clicked}/>
+        <Pointer leftClicked={leftClicked} middleClicked={middleClicked}/>
       </Canvas>
     </div>
   )
