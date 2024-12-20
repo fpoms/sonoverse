@@ -1,0 +1,23 @@
+[project]
+name = "sonoverse"
+version = "0.0.1"
+authors = [
+    { name = "Fait Poms", email="faitpoms@gmail.com" },
+]
+description = "The Sonoverse python backend"
+readme = "README.md"
+requires-python = ">=3.8.0"
+license = { file = "LICENSE" }
+dependencies = ["numpy", "numba", "meshio", "scipy", "bempp-cl", "flask", "flask-cors"]
+
+[project.urls]
+repository = "https://github.com/fpoms/sonoverse"
+
+[project.optional-dependencies]
+docs = ["sphinx-autoapi"]
+optional = ["matplotlib"]
+style = ["pydocstyle", "flake8"]
+test = ["pytest", "pytest-xdist"]
+
+[tool.setuptools]
+packages = ["sonoverse"]

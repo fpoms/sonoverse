@@ -1,8 +1,9 @@
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import './App.css'
 import { Canvas, useFrame, ThreeElements } from '@react-three/fiber'
 import * as THREE from 'three'
 import { rotate } from 'three/tsl'
+import axios from 'axios'
 
 
 function Box(props: ThreeElements['mesh']) {
@@ -31,6 +32,41 @@ function Box(props: ThreeElements['mesh']) {
       onPointerOut={(event) => hover(false)}>
       <boxGeometry args={[1, 1, 1]} />
       <meshStandardMaterial color={hovered ? 'hotpink' : 'orange'} />
+    </mesh>
+  )
+}
+
+function Grid() {
+  const ref = useRef<THREE.Mesh>(null!)
+  const [hovered, hover] = useState(false)
+  const [clicked, click] = useState(false)
+  const [geometry, setGeometry] = useState<THREE.BufferGeometry>(new THREE.SphereGeometry(3));
+
+  useEffect(() => {
+    axios.get('http://127.0.0.1:5000/api/grid')
+      .then(response => {
+        const data = response.data;
+        const geometry = new THREE.BufferGeometry();
+        const indices = data.indices;
+        const vertices = new Float32Array(data.vertices);
+        geometry.setIndex( indices );
+        geometry.setAttribute('position', new THREE.BufferAttribute(vertices, 3));
+        setGeometry(geometry);
+      })
+      .catch(error => {
+        console.error(error);
+      });
+  }, []);
+
+  return (
+    <mesh
+      ref={ref}
+      scale={clicked ? 1.5 : 1}
+      onClick={(event) => click(!clicked)}
+      onPointerOver={(event) => hover(true)}
+      onPointerOut={(event) => hover(false)}
+      geometry={geometry}>
+      <meshStandardMaterial color={hovered ? 'hotpink' : 'orange'} wireframe={true} />
     </mesh>
   )
 }
@@ -102,9 +138,7 @@ function App() {
         <ambientLight intensity={Math.PI / 2} />
         <spotLight position={[10, 10, 10]} angle={0.15} penumbra={1} decay={0} intensity={Math.PI} />
         <pointLight position={[-10, -10, -10]} decay={0} intensity={Math.PI} />
-        <Box position={[-1.2, 0, 0]} />
-        <Box position={[1.2, 0, 0]} />
-        <Box position={[0, -1.2, 0]} />
+        <Grid/>
         <axesHelper args={[5]} />
         <Pointer leftClicked={leftClicked} middleClicked={middleClicked}/>
       </Canvas>
